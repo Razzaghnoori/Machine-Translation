@@ -101,13 +101,13 @@ def predict(model_path, eng_tokenizer, fa_tokenizer, sents=None, model=None):
 
 if __name__ == "__main__":
     model = None
-    X, y = None, None
+    
+    X, en_tokenizer = encode_sequences(arguments.input)
+    y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
 
     if exists(arguments.model_path):
         model = load_model(arguments.model_path)
     else:
-        X, en_tokenizer = encode_sequences(arguments.input)
-        y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
         fa_vocab_size = y.shape[-1]
 
         perm = np.random.permutation(X.shape[0])
