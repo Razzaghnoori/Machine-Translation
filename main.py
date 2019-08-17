@@ -30,6 +30,11 @@ parser.add_argument('--input', '-i', help="Source language file.")
 parser.add_argument('--output', '-o', help="Target language file.")
 parser.add_argument('--model-path', '-m', \
     help='Path to save the model and load it back again.', default='model.h5')
+parser.add_argument('--epochs', '-n', help='Number of epochs', \
+    default=100, type=int)
+parser.add_argument('--embeddings-dim', '-d', help='Dimension of the embeddings', \
+    default=128, type=int)
+parser.add_argument('--batch-size', '-b', default=16, type=int)
 
 arguments = parser.parse_args()
 
@@ -61,8 +66,7 @@ def encode_sequences(filename='', text='', max_len=30, to_ohe=False, tokenizer=N
             X = tokenizer.texts_to_sequences(f)
     elif text:
         X = tokenizer.texts_to_sequences(text)
-    
-    X = pad_sequences(X, maxlen=max_len, padding='post')
+
     if not to_ohe:
         return X, tokenizer
     return to_categorical(X), tokenizer
@@ -76,12 +80,13 @@ def define_model(X, y, tar_vocab_size, n_units):
     model.add(TimeDistributed(Dense(tar_vocab_size, activation='softmax')))
     return model
     
-def train(model, X_tr, y_tr, model_path):
+def train(model, X, y, model_path):
     # fit model
     checkpoint = ModelCheckpoint(model_path, monitor='val_loss', \
         verbose=1, save_best_only=True, mode='min')
-    model.fit(X_tr, y_tr, epochs=10, batch_size=8, validation_split=0.1, \
-        callbacks=[checkpoint], verbose=2)
+    model.fit(X, y, epochs=arguments.epochs, batch_size=arguments.batch_size, \
+        validation_split=0.1, callbacks=[checkpoint], verbose=2)
+
     model.save(model_path)
     return model
 
@@ -117,7 +122,7 @@ if __name__ == "__main__":
         #X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.1)
 
         # define model
-        model = define_model(X, y, fa_vocab_size, 100)
+        model = define_model(X, y, fa_vocab_size, arguments.embeddings_dim)
         model.compile(optimizer='adadelta', loss='categorical_crossentropy')
         
         # summarize defined model
