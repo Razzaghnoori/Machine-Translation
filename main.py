@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
         # define model
         model = define_model(X, y, fa_vocab_size, 100)
-        model.compile(optimizer='adadelta', loss='categorical_crossentropy')
+        model.compile(optimizer='adagrad', loss='categorical_crossentropy')
         
         # summarize defined model
         print(model.summary())
