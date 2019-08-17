@@ -67,6 +67,8 @@ def encode_sequences(filename='', text='', max_len=30, to_ohe=False, tokenizer=N
     elif text:
         X = tokenizer.texts_to_sequences(text)
 
+    X = pad_sequences(X, maxlen=max_len, padding='post')
+    
     if not to_ohe:
         return X, tokenizer
     return to_categorical(X), tokenizer
