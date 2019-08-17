@@ -101,6 +101,7 @@ def predict(model_path, eng_tokenizer, fa_tokenizer, sents=None, model=None):
 
 if __name__ == "__main__":
     model = None
+    X, y = None, None
 
     if exists(arguments.model_path):
         model = load_model(arguments.model_path)
