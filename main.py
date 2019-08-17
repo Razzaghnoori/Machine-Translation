@@ -4,6 +4,7 @@ import string
 import numpy  as np
 import argparse
 
+from os.path import exists
 from pickle import load
 from numpy import array
 from math import floor
@@ -27,6 +28,8 @@ parser.add_argument('--train', '-t', help='Train if set.', action='store_true')
 parser.add_argument('--predict', '-p', help='Predict if set.', action='store_true')
 parser.add_argument('--input', '-i', help="Source language file.")
 parser.add_argument('--output', '-o', help="Target language file.")
+parser.add_argument('--model-path', '-m', \
+    help='Path to save the model and load it back again.', default='model.h5')
 
 arguments = parser.parse_args()
 
@@ -77,7 +80,7 @@ def train(model, X_tr, y_tr, model_path):
     # fit model
     checkpoint = ModelCheckpoint(model_path, monitor='val_loss', \
         verbose=1, save_best_only=True, mode='min')
-    model.fit(X_tr, y_tr, epochs=100, batch_size=8, validation_split=0.1, \
+    model.fit(X_tr, y_tr, epochs=10, batch_size=8, validation_split=0.1, \
         callbacks=[checkpoint], verbose=2)
     model.save(model_path)
     return model
@@ -97,29 +100,31 @@ def predict(model_path, eng_tokenizer, fa_tokenizer, sents=None, model=None):
 
 
 if __name__ == "__main__":
-    model_path = 'model.h5'
     model = None
 
-    X, en_tokenizer = encode_sequences(arguments.input)
-    y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
-    fa_vocab_size = y.shape[-1]
+    if exists(arguments.model_path):
+        model = load_model(arguments.model_path)
+    else:
+        X, en_tokenizer = encode_sequences(arguments.input)
+        y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
+        fa_vocab_size = y.shape[-1]
 
-    perm = np.random.permutation(X.shape[0])
-    X, y = X[perm], y[perm]
+        perm = np.random.permutation(X.shape[0])
+        X, y = X[perm], y[perm]
 
-    # prepare training and testing data
-    #X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.1)
+        # prepare training and testing data
+        #X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.1)
 
-    # define model
-    model = define_model(X, y, fa_vocab_size, 256)
-    model.compile(optimizer='adam', loss='categorical_crossentropy')
-    
-    # summarize defined model
-    print(model.summary())
+        # define model
+        model = define_model(X, y, fa_vocab_size, 100)
+        model.compile(optimizer='adadelta', loss='categorical_crossentropy')
+        
+        # summarize defined model
+        print(model.summary())
 
     if arguments.train:
-        model = train(model, X, y, model_path)
+        model = train(model, X, y, arguments.model_path)
 
     if arguments.predict:
         while True:
-            predict(model_path, en_tokenizer, fa_tokenizer, model=model)
+            predict(arguments.model_path, en_tokenizer, fa_tokenizer, model=model)
