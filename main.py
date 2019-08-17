@@ -25,6 +25,8 @@ from keras.models import load_model
 parser = argparse.ArgumentParser()
 parser.add_argument('--train', '-t', help='Train if set.', action='store_true')
 parser.add_argument('--predict', '-p', help='Predict if set.', action='store_true')
+parser.add_argument('--input', '-i', help="Source language file.")
+parser.add_argument('--output', '-o', help="Target language file.")
 
 arguments = parser.parse_args()
 
@@ -73,9 +75,9 @@ def define_model(X, y, tar_vocab_size, n_units):
     return model
 
 def main():
-    with open('eng') as f:
+    with open(arguments.input) as f:
         eng_txt = f.readlines()
-    with open('fa') as f:
+    with open(arguments.output) as f:
         fa_txt = f.readlines()
 
     eng_tokenizer = create_tokenizer(eng_txt)
@@ -107,11 +109,12 @@ def train(model, X_tr, y_tr, model_path):
     model.fit(X_tr, y_tr, epochs=100, batch_size=8, validation_split=0.1, callbacks=[checkpoint], verbose=2)
     model.save(model_path)
 
-def predict(model_path, eng_tokenizer, fa_tokenizer):
+def predict(model_path, eng_tokenizer, fa_tokenizer, sents=None):
     model = load_model(model_path)
     
     while True:
-        sents = [input()]
+        if sents is None:
+            sents = [input()]
         x = encode_sequences(eng_tokenizer, sents)
 
         pred = model.predict(x)[0]
@@ -122,9 +125,9 @@ def predict(model_path, eng_tokenizer, fa_tokenizer):
 if __name__ == "__main__":
     model_path = 'model.h5'
 
-    with open('eng') as f:
+    with open(arguments.input) as f:
         eng_txt = f.readlines()
-    with open('fa') as f:
+    with open(arguments.output) as f:
         fa_txt = f.readlines()
 
     eng_tokenizer = create_tokenizer(eng_txt)
