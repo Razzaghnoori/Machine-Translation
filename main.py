@@ -112,8 +112,6 @@ if __name__ == "__main__":
 
     # define model
     model = define_model(X, y, fa_vocab_size, 256)
-    del X
-    del y
     model.compile(optimizer='adam', loss='categorical_crossentropy')
     
     # summarize defined model
