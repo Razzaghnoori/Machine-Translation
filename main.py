@@ -108,7 +108,7 @@ if __name__ == "__main__":
     X, y = X[perm], y[perm]
 
     # prepare training and testing data
-    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.1)
+    #X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.1)
 
     # define model
     model = define_model(X, y, fa_vocab_size, 256)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     print(model.summary())
 
     if arguments.train:
-        model = train(model, X_tr, y_tr, model_path)
+        model = train(model, X, y, model_path)
 
     if arguments.predict:
         while True:
