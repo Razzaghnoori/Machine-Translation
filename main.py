@@ -31,10 +31,11 @@ parser.add_argument('--output', '-o', help="Target language file.")
 arguments = parser.parse_args()
 
 # fit a tokenizer
-def create_tokenizer(txt):
-    tokenizer = Tokenizer(oov_token='UNK')
-    tokenizer.fit_on_texts(txt)
-    return tokenizer
+def _create_tokenizer(filename):
+    with open(filename) as f:
+        tokenizer = Tokenizer(oov_token='UNK')
+        tokenizer.fit_on_texts(f)
+        return tokenizer
 
 #reading file and split it into sentences
 def read_file(filename):
@@ -48,22 +49,20 @@ def read_file(filename):
     return result.strip().split('\n')
 
 # encode and pad sequences
-def encode_sequences(tokenizer, lines, max_len=30):
-    # integer encode sequences
-    X = tokenizer.texts_to_sequences(lines)
-    # pad sequences with 0 values
+def encode_sequences(filename='', text='', max_len=30, to_ohe=False, tokenizer=None):
+    if tokenizer is None:
+        tokenizer = _create_tokenizer(filename)
+    
+    if filename:
+        with open(filename) as f:
+            X = tokenizer.texts_to_sequences(f)
+    elif text:
+        X = tokenizer.texts_to_sequences(text)
+    
     X = pad_sequences(X, maxlen=max_len, padding='post')
-    return X
-
-# one hot encode target sequence
-def encode_output(sequences, vocab_size):
-    ylist = list()
-    for sequence in sequences:
-        encoded = to_categorical(sequence, num_classes=vocab_size)
-        ylist.append(encoded)
-    y = array(ylist)
-    y = y.reshape(sequences.shape[0], sequences.shape[1], vocab_size)
-    return y
+    if not to_ohe:
+        return X, tokenizer
+    return to_categorical(X), tokenizer
 
 def define_model(X, y, tar_vocab_size, n_units):
     model = Sequential()
@@ -73,70 +72,37 @@ def define_model(X, y, tar_vocab_size, n_units):
     model.add(LSTM(n_units, return_sequences=True))
     model.add(TimeDistributed(Dense(tar_vocab_size, activation='softmax')))
     return model
-
-def main():
-    with open(arguments.input) as f:
-        eng_txt = f.readlines()
-    with open(arguments.output) as f:
-        fa_txt = f.readlines()
-
-    eng_tokenizer = create_tokenizer(eng_txt)
-    X = encode_sequences(eng_tokenizer, eng_txt)
-
-    fa_tokenizer = create_tokenizer(fa_txt)
-    y = encode_sequences(fa_tokenizer, fa_txt)
-    fa_vocab_size = K.np.max(y) + 1
-    y = to_categorical(y)
-
-    perm = np.random.permutation(X.shape[0])
-    X, y = X[perm], y[perm]
-
-    # prepare training and testing data
-    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.1)
-
-    # define model
-    model = define_model(X, y, fa_vocab_size, 256)
-    model.compile(optimizer='adam', loss='categorical_crossentropy')
-    
-    # summarize defined model
-    print(model.summary())
-
-    return model, X_tr, y_tr, X_te, y_te
     
 def train(model, X_tr, y_tr, model_path):
     # fit model
-    checkpoint = ModelCheckpoint(model_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
-    model.fit(X_tr, y_tr, epochs=100, batch_size=8, validation_split=0.1, callbacks=[checkpoint], verbose=2)
+    checkpoint = ModelCheckpoint(model_path, monitor='val_loss', \
+        verbose=1, save_best_only=True, mode='min')
+    model.fit(X_tr, y_tr, epochs=100, batch_size=8, validation_split=0.1, \
+        callbacks=[checkpoint], verbose=2)
     model.save(model_path)
+    return model
 
-def predict(model_path, eng_tokenizer, fa_tokenizer, sents=None):
-    model = load_model(model_path)
+def predict(model_path, eng_tokenizer, fa_tokenizer, sents=None, model=None):
+    if model is None:
+        model = load_model(model_path)
     
-    while True:
-        if sents is None:
-            sents = [input()]
-        x = encode_sequences(eng_tokenizer, sents)
+    if sents is None:
+        sents = [input('> ')]
+    x, _ = encode_sequences(text=sents, tokenizer=eng_tokenizer)
 
-        pred = model.predict(x)[0]
-        inds = pred.argmax(axis=-1)
-        print(' '.join([fa_tokenizer.index_word[x+1] for x in inds.tolist()]).replace(' UNK', ''))
+    pred = model.predict(x)[0]
+    inds = pred.argmax(axis=-1)
+    print(' '.join([fa_tokenizer.index_word[x+1] \
+        for x in inds.tolist()]).replace(' UNK', ''))
 
 
 if __name__ == "__main__":
     model_path = 'model.h5'
+    model = None
 
-    with open(arguments.input) as f:
-        eng_txt = f.readlines()
-    with open(arguments.output) as f:
-        fa_txt = f.readlines()
-
-    eng_tokenizer = create_tokenizer(eng_txt)
-    X = encode_sequences(eng_tokenizer, eng_txt)
-
-    fa_tokenizer = create_tokenizer(fa_txt)
-    y = encode_sequences(fa_tokenizer, fa_txt)
-    fa_vocab_size = K.np.max(y) + 1
-    y = to_categorical(y)
+    X, en_tokenizer = encode_sequences(arguments.input)
+    y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
+    fa_vocab_size = y.shape[-1]
 
     perm = np.random.permutation(X.shape[0])
     X, y = X[perm], y[perm]
@@ -146,13 +112,16 @@ if __name__ == "__main__":
 
     # define model
     model = define_model(X, y, fa_vocab_size, 256)
+    del X
+    del y
     model.compile(optimizer='adam', loss='categorical_crossentropy')
     
     # summarize defined model
     print(model.summary())
 
     if arguments.train:
-        train(model, X_tr, y_tr, model_path)
+        model = train(model, X_tr, y_tr, model_path)
 
     if arguments.predict:
-        predict(model_path, eng_tokenizer, fa_tokenizer)
+        while True:
+            predict(model_path, en_tokenizer, fa_tokenizer, model=model)
