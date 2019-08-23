@@ -1,0 +1,7 @@
+venv/**
+whocares/**
+*.ipynb
+*.h5
+*.md
+.vscode
+.ipynb_checkpoints
