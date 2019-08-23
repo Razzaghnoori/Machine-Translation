@@ -71,7 +71,6 @@ def encode_sequences(filename='', text='', max_len=30, to_ohe=False, tokenizer=N
     
     if not to_ohe:
         return X, tokenizer
-    print(X.shape)
     return to_categorical(X), tokenizer
 
 def define_model(X, y, tar_vocab_size, n_units):
@@ -111,7 +110,7 @@ if __name__ == "__main__":
     model = None
     
     X, en_tokenizer = encode_sequences(arguments.input)
-    y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
+    y, fa_tokenizer = encode_sequences(arguments.output)
 
     if exists(arguments.model_path):
         model = load_model(arguments.model_path)
