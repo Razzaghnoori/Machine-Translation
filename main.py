@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
         # define model
         model = define_model(X, y, fa_vocab_size, arguments.embeddings_dim)
-        model.compile(optimizer='adadelta', loss='categorical_crossentropy')
+        model.compile(optimizer='adadelta', loss='sparse_categorical_crossentropy')
         
         # summarize defined model
         print(model.summary())
