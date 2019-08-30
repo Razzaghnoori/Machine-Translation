@@ -47,17 +47,6 @@ def _create_tokenizer(filename):
         tokenizer.fit_on_texts(f)
         return tokenizer
 
-#reading file and split it into sentences
-def read_file(filename):
-    with open(filename) as file:
-        text = file.read()
-    #delete punctuation
-    text = re.sub(r'[^\w\s]','',text)
-    #delete numbers
-    result = ''.join([i for i in text if not i.isdigit()])
-    result.lower()
-    return result.strip().split('\n')
-
 # encode and pad sequences
 def encode_sequences(filename='', text='', max_len=25, to_ohe=False, tokenizer=None):
     if tokenizer is None:
@@ -126,25 +115,21 @@ if __name__ == "__main__":
     
     X, en_tokenizer = encode_sequences(arguments.input)
     y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
-    #y = y.reshape(list(y.shape).append(-1))
+
+    fa_vocab_size = y.shape[-1]
+
+    perm = np.random.permutation(X.shape[0])
+    X, y = X[perm], y[perm]
+
+    # define model
+    model = define_model(X, y, fa_vocab_size, arguments.embeddings_dim)
+    model.compile(optimizer='adadelta', loss='categorical_crossentropy')
 
     if exists(arguments.model_path):
-        model = load_model(arguments.model_path)
-    else:
-        fa_vocab_size = y.shape[-1]
-
-        perm = np.random.permutation(X.shape[0])
-        X, y = X[perm], y[perm]
-
-        # prepare training and testing data
-        #X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.1)
-
-        # define model
-        model = define_model(X, y, fa_vocab_size, arguments.embeddings_dim)
-        model.compile(optimizer='adadelta', loss='categorical_crossentropy')
-        
-        # summarize defined model
-        print(model.summary())
+        model.load_weights(arguments.model_path)
+    
+    # summarize defined model
+    print(model.summary())
 
     if arguments.train:
         model = train(model, X, y, arguments.model_path)
