@@ -34,6 +34,8 @@ parser.add_argument('--epochs', '-n', help='Number of epochs', \
     default=100, type=int)
 parser.add_argument('--embeddings-dim', '-d', help='Dimension of the embeddings', \
     default=128, type=int)
+parser.add_argument('--latent-dim', '-l', help='LSTM number of units.', \
+    default=100, type=int)
 parser.add_argument('--batch-size', '-b', default=16, type=int)
 
 arguments = parser.parse_args()
@@ -71,7 +73,15 @@ def encode_sequences(filename='', text='', max_len=30, to_ohe=False, tokenizer=N
     
     if not to_ohe:
         return X, tokenizer
-    return to_categorical(X), tokenizer
+    
+    #Doing to_categorical manually to bypass memory error
+    ohe = np.zeros((X.shape[0], X.shape[1], np.max(X)))
+    for i in range(X.shape[0]):
+        for j in range(X.shape[1]):
+            index = X[i][j]
+            ohe[i][j][index] = 1
+
+    return ohe, tokenizer
 
 def define_model(X, y, tar_vocab_size, n_units):
     model = Sequential()
@@ -81,6 +91,7 @@ def define_model(X, y, tar_vocab_size, n_units):
     model.add(LSTM(n_units, return_sequences=True))
     model.add(TimeDistributed(Dense(tar_vocab_size, activation='softmax')))
     return model
+
     
 def train(model, X, y, model_path):
     # fit model
