@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # define model
     model = define_model(X, y, fa_vocab_size, \
         arguments.embeddings_dim, arguments.latent_dim)
-    model.compile(optimizer='adam', loss='categorical_crossentropy')
+    model.compile(optimizer='adadelta', loss='categorical_crossentropy')
 
     if exists(arguments.model_path):
         model.load_weights(arguments.model_path)
