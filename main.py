@@ -74,6 +74,8 @@ def encode_sequences(filename='', text='', max_len=25, to_ohe=False, tokenizer=N
     if not to_ohe:
         return X, tokenizer
     
+    print(X.shape)
+    print(X[:3])
     #Doing to_categorical manually to bypass memory error
     #Dtype: unsigned int with one byte length
     ohe = np.zeros((X.shape[0], X.shape[1], np.max(X)), dtype=np.dtype('u1'))
