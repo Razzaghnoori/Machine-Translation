@@ -93,13 +93,9 @@ def train(model, X, y, model_path):
     model.fit(X, y, epochs=arguments.epochs, batch_size=arguments.batch_size, \
         validation_split=0.1, callbacks=[checkpoint], verbose=2)
 
-    model.save(model_path)
     return model
 
-def predict(model_path, eng_tokenizer, fa_tokenizer, sents=None, model=None):
-    if model is None:
-        model = load_model(model_path)
-    
+def predict(model_path, eng_tokenizer, fa_tokenizer, model, sents=None):
     if sents is None:
         sents = [input('> ')]
     x, _ = encode_sequences(text=sents, tokenizer=eng_tokenizer)
@@ -136,4 +132,4 @@ if __name__ == "__main__":
 
     if arguments.predict:
         while True:
-            predict(arguments.model_path, en_tokenizer, fa_tokenizer, model=model)
+            predict(arguments.model_path, en_tokenizer, fa_tokenizer, model)
