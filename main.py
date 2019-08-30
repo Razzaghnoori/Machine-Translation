@@ -124,8 +124,8 @@ if __name__ == "__main__":
     model = None
     
     X, en_tokenizer = encode_sequences(arguments.input)
-    y, fa_tokenizer = encode_sequences(arguments.output)
-    y = y.reshape(list(y.shape).append(-1))
+    y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
+    #y = y.reshape(list(y.shape).append(-1))
 
     if exists(arguments.model_path):
         model = load_model(arguments.model_path)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
         # define model
         model = define_model(X, y, fa_vocab_size, arguments.embeddings_dim)
-        model.compile(optimizer='adadelta', loss='sparse_categorical_crossentropy')
+        model.compile(optimizer='adadelta', loss='categorical_crossentropy')
         
         # summarize defined model
         print(model.summary())
