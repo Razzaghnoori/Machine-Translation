@@ -43,7 +43,7 @@ arguments = parser.parse_args()
 # fit a tokenizer
 def _create_tokenizer(filename):
     with open(filename) as f:
-        tokenizer = Tokenizer(oov_token='UNK')
+        tokenizer = Tokenizer(oov_token='UNK', num_words=10000)
         tokenizer.fit_on_texts(f)
         return tokenizer
 
@@ -59,7 +59,7 @@ def read_file(filename):
     return result.strip().split('\n')
 
 # encode and pad sequences
-def encode_sequences(filename='', text='', max_len=30, to_ohe=False, tokenizer=None):
+def encode_sequences(filename='', text='', max_len=25, to_ohe=False, tokenizer=None):
     if tokenizer is None:
         tokenizer = _create_tokenizer(filename)
     
@@ -75,7 +75,7 @@ def encode_sequences(filename='', text='', max_len=30, to_ohe=False, tokenizer=N
         return X, tokenizer
     
     #Doing to_categorical manually to bypass memory error
-    ohe = np.zeros((X.shape[0], X.shape[1], np.max(X)))
+    ohe = np.zeros((X.shape[0], X.shape[1], np.max(X)), dtype=bool)
     for i in range(X.shape[0]):
         for j in range(X.shape[1]):
             index = X[i][j]
