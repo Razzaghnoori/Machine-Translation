@@ -62,9 +62,7 @@ def encode_sequences(filename='', text='', max_len=25, to_ohe=False, tokenizer=N
     
     if not to_ohe:
         return X, tokenizer
-    
-    print(X.shape)
-    print(X[:3])
+
     #Doing to_categorical manually to bypass memory error
     #Dtype: unsigned int with one byte length
     ohe = np.zeros((X.shape[0], X.shape[1], np.max(X)+1), dtype=np.dtype('u1'))
@@ -75,12 +73,14 @@ def encode_sequences(filename='', text='', max_len=25, to_ohe=False, tokenizer=N
 
     return ohe, tokenizer
 
-def define_model(X, y, tar_vocab_size, n_units):
+def define_model(X, y, tar_vocab_size, emb_dim, n_lstm_units):
     model = Sequential()
-    model.add(Embedding(K.max(X)+1, n_units, input_length=X.shape[1]))
-    model.add(LSTM(n_units))
+    model.add(Embedding(K.max(X)+1, emb_dim, input_length=X.shape[1]))
+    model.add(LSTM(n_lstm_units))
+    model.add(LSTM(n_lstm_units))
     model.add(RepeatVector(y.shape[1]))
-    model.add(LSTM(n_units, return_sequences=True))
+    model.add(LSTM(n_lstm_units, return_sequences=True))
+    model.add(LSTM(n_lstm_units, return_sequences=True))
     model.add(TimeDistributed(Dense(tar_vocab_size, activation='softmax')))
     return model
 
@@ -118,8 +118,9 @@ if __name__ == "__main__":
     X, y = X[perm], y[perm]
 
     # define model
-    model = define_model(X, y, fa_vocab_size, arguments.embeddings_dim)
-    model.compile(optimizer='adadelta', loss='categorical_crossentropy')
+    model = define_model(X, y, fa_vocab_size, \
+        arguments.embeddings_dim, arguments.latent_dim)
+    model.compile(optimizer='adam', loss='categorical_crossentropy')
 
     if exists(arguments.model_path):
         model.load_weights(arguments.model_path)
