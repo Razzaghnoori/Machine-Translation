@@ -78,7 +78,7 @@ def encode_sequences(filename='', text='', max_len=25, to_ohe=False, tokenizer=N
     print(X[:3])
     #Doing to_categorical manually to bypass memory error
     #Dtype: unsigned int with one byte length
-    ohe = np.zeros((X.shape[0], X.shape[1], np.max(X)), dtype=np.dtype('u1'))
+    ohe = np.zeros((X.shape[0], X.shape[1], np.max(X)+1), dtype=np.dtype('u1'))
     for i in range(X.shape[0]):
         for j in range(X.shape[1]):
             index = X[i][j]
