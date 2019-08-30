@@ -125,6 +125,7 @@ if __name__ == "__main__":
     
     X, en_tokenizer = encode_sequences(arguments.input)
     y, fa_tokenizer = encode_sequences(arguments.output)
+    y = y.reshape(list(y.shape).append(-1))
 
     if exists(arguments.model_path):
         model = load_model(arguments.model_path)
