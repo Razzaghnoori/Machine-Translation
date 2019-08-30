@@ -124,7 +124,7 @@ if __name__ == "__main__":
     model = None
     
     X, en_tokenizer = encode_sequences(arguments.input)
-    y, fa_tokenizer = encode_sequences(arguments.output, to_ohe=True)
+    y, fa_tokenizer = encode_sequences(arguments.output)
 
     if exists(arguments.model_path):
         model = load_model(arguments.model_path)
