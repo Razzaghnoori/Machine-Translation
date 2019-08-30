@@ -99,7 +99,8 @@ def define_model(X, y, tar_vocab_size, n_units):
 def train(model, X, y, model_path):
     # fit model
     checkpoint = ModelCheckpoint(model_path, monitor='val_loss', \
-        verbose=1, save_best_only=True, mode='min')
+        verbose=1, save_weights_only=True, save_best_only=True, \
+        mode='min')
     model.fit(X, y, epochs=arguments.epochs, batch_size=arguments.batch_size, \
         validation_split=0.1, callbacks=[checkpoint], verbose=2)
 
