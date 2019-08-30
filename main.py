@@ -76,7 +76,7 @@ def encode_sequences(filename='', text='', max_len=25, to_ohe=False, tokenizer=N
 def define_model(X, y, tar_vocab_size, emb_dim, n_lstm_units):
     model = Sequential()
     model.add(Embedding(K.max(X)+1, emb_dim, input_length=X.shape[1]))
-    model.add(LSTM(n_lstm_units))
+    model.add(LSTM(n_lstm_units, return_sequences=True))
     model.add(LSTM(n_lstm_units))
     model.add(RepeatVector(y.shape[1]))
     model.add(LSTM(n_lstm_units, return_sequences=True))
